@@ -7,7 +7,7 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
     
     defaultConfig {
-        applicationId "com.audiovisualizer"
+        applicationId "io.github.danielytbr.audiovisualizer"
         minSdk rootProject.ext.minSdkVersion
         targetSdk rootProject.ext.targetSdkVersion
         versionCode 1
