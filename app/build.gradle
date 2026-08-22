@@ -3,6 +3,7 @@ plugins {
 }
 
 android {
+    namespace "io.github.danielytbr.audiovisualizer"
     compileSdk rootProject.ext.compileSdkVersion
     
     defaultConfig {
