@@ -1,6 +1,5 @@
 plugins {
     id 'com.android.application'
-    id 'kotlin-android'
 }
 
 android {
@@ -28,10 +27,6 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
-
     buildFeatures {
         viewBinding true
     }
@@ -47,9 +42,6 @@ dependencies {
     
     // Constraint Layout
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    
-    // Kotlin
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:${rootProject.ext.kotlin_version}"
     
     // Testing
     testImplementation 'junit:junit:4.13.2'
