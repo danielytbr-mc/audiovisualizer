@@ -35,7 +35,7 @@ android {
 
 dependencies {
     // Core AndroidX
-    implementation "androidx.core:androidx-core:${rootProject.ext.androidx_core_version}"
+    implementation "androidx.core:core:${rootProject.ext.androidx_core_version}"
     implementation "androidx.appcompat:appcompat:${rootProject.ext.androidx_appcompat_version}"
     
     // Material Design
