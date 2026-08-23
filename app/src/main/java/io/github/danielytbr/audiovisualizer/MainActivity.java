@@ -29,6 +29,9 @@ public class MainActivity extends AppCompatActivity {
     private BarVisualizerView mVisualizerView;
     private boolean mFirstFftReceived = false;
 
+    
+    private VisualizerConfig config;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,8 +50,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupVisualizer() {
-        // 1. Load configuration
-        VisualizerConfig config = loadConfig();
+        // 1. Load configuration (assign to the field)
+        config = loadConfig();
 
         // 2. Apply config to the view
         mVisualizerView.setBarCount(config.barCount);
@@ -60,23 +63,23 @@ public class MainActivity extends AppCompatActivity {
             // 3. Load audio file
             mPlayer = MediaPlayer.create(this, R.raw.test);
             if (mPlayer == null) {
-                if (config.toasts == true) Toast.makeText(this, "❌ File missing!", Toast.LENGTH_LONG).show();
+                if (config.toasts) Toast.makeText(this, "❌ File missing!", Toast.LENGTH_LONG).show();
                 return;
             }
-            if (config.toasts == true) Toast.makeText(this, "✅ File loaded! Duration: " + mPlayer.getDuration() + "ms", Toast.LENGTH_SHORT).show();
+            if (config.toasts) Toast.makeText(this, "✅ File loaded! Duration: " + mPlayer.getDuration() + "ms", Toast.LENGTH_SHORT).show();
 
             mPlayer.setLooping(true);
             mPlayer.start();
 
             if (!mPlayer.isPlaying()) {
-                if (config.toasts == true) Toast.makeText(this, "⚠️ Not playing – check volume", Toast.LENGTH_SHORT).show();
+                if (config.toasts) Toast.makeText(this, "⚠️ Not playing – check volume", Toast.LENGTH_SHORT).show();
                 return;
             }
-            if (config.toasts == true) Toast.makeText(this, "🔊 Playing (looping)...", Toast.LENGTH_SHORT).show();
+            if (config.toasts) Toast.makeText(this, "🔊 Playing (looping)...", Toast.LENGTH_SHORT).show();
 
             // 4. Create Visualizer
             int sessionId = mPlayer.getAudioSessionId();
-            if (config.toasts == true) Toast.makeText(this, "🎧 Session ID: " + sessionId, Toast.LENGTH_SHORT).show();
+            if (config.toasts) Toast.makeText(this, "🎧 Session ID: " + sessionId, Toast.LENGTH_SHORT).show();
 
             mVisualizer = new Visualizer(sessionId);
             mVisualizer.setCaptureSize(256);
@@ -88,9 +91,10 @@ public class MainActivity extends AppCompatActivity {
                 public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {
                     if (!mFirstFftReceived) {
                         mFirstFftReceived = true;
-                        runOnUiThread(() ->
-                                if (config.toasts == true) Toast.makeText(MainActivity.this, "🌊 Waveform data arrived!", Toast.LENGTH_SHORT).show()
-                        );
+                        
+                        runOnUiThread(() -> {
+                            if (config.toasts) Toast.makeText(MainActivity.this, "🌊 Waveform data arrived!", Toast.LENGTH_SHORT).show();
+                        });
                     }
                     // Optionally use waveform as fallback
                     runOnUiThread(() -> mVisualizerView.updateFft(waveform));
@@ -100,9 +104,10 @@ public class MainActivity extends AppCompatActivity {
                 public void onFftDataCapture(Visualizer visualizer, byte[] fft, int samplingRate) {
                     if (!mFirstFftReceived) {
                         mFirstFftReceived = true;
-                        runOnUiThread(() ->
-                                if (config.toasts == true) Toast.makeText(MainActivity.this, "🎵 FFT data arrived! Length: " + fft.length, Toast.LENGTH_SHORT).show()
-                        );
+                        
+                        runOnUiThread(() -> {
+                            if (config.toasts) Toast.makeText(MainActivity.this, "🎵 FFT data arrived! Length: " + fft.length, Toast.LENGTH_SHORT).show();
+                        });
                     }
                     runOnUiThread(() -> mVisualizerView.updateFft(fft));
                 }
@@ -111,22 +116,23 @@ public class MainActivity extends AppCompatActivity {
             // 6. Enable Visualizer
             mVisualizer.setEnabled(true);
             if (mVisualizer.getEnabled()) {
-                if (config.toasts == true) Toast.makeText(this, "📊 Visualizer ENABLED", Toast.LENGTH_SHORT).show();
+                if (config.toasts) Toast.makeText(this, "📊 Visualizer ENABLED", Toast.LENGTH_SHORT).show();
             } else {
-                if (config.toasts == true) Toast.makeText(this, "❌ Visualizer enable failed", Toast.LENGTH_SHORT).show();
+                if (config.toasts) Toast.makeText(this, "❌ Visualizer enable failed", Toast.LENGTH_SHORT).show();
             }
 
             // 7. Fallback timeout (no data after 3s)
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
                 if (!mFirstFftReceived) {
-                    runOnUiThread(() ->
-                            if (config.toasts == true) Toast.makeText(MainActivity.this, "⏰ No data after 3s. Check audio file.", Toast.LENGTH_LONG).show()
-                    );
+                    
+                    runOnUiThread(() -> {
+                        if (config.toasts) Toast.makeText(MainActivity.this, "⏰ No data after 3s. Check audio file.", Toast.LENGTH_LONG).show();
+                    });
                 }
             }, 3000);
 
         } catch (Exception e) {
-            if (config.toasts == true) Toast.makeText(this, "❌ Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            if (config.toasts) Toast.makeText(this, "❌ Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
             e.printStackTrace();
         }
     }
@@ -185,10 +191,14 @@ public class MainActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 1 && grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            if (config.toasts == true) Toast.makeText(this, "✅ Permission granted – starting visualizer", Toast.LENGTH_SHORT).show();
+            
+            config = loadConfig(); // ensure config is available
+            if (config.toasts) Toast.makeText(this, "✅ Permission granted – starting visualizer", Toast.LENGTH_SHORT).show();
             setupVisualizer();
         } else {
-            if (config.toasts == true) Toast.makeText(this, "❌ Permission denied – can't access audio", Toast.LENGTH_LONG).show();
+            
+            config = loadConfig(); // safe even if file missing
+            if (config.toasts) Toast.makeText(this, "❌ Permission denied – can't access audio", Toast.LENGTH_LONG).show();
         }
     }
 
