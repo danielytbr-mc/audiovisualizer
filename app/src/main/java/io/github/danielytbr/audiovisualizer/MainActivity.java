@@ -25,6 +25,12 @@ public class MainActivity extends AppCompatActivity {
 
         mVisualizerView = findViewById(R.id.visualizer_view);
 
+      byte[] testFft = new byte[256];
+      for (int i = 0; i < testFft.length; i++) {
+          testFft[i] = (byte) (Math.sin(i * 0.3) * 100 + 128);
+      }
+      mVisualizerView.updateFft(testFft);
+
         // Check permission
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
