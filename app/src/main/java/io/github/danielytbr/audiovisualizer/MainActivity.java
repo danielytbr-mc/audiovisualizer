@@ -142,4 +142,50 @@ private void setupVisualizer() {
         if (mVisualizer != null) mVisualizer.release();
         if (mPlayer != null) mPlayer.release();
     }
+    private VisualizerConfig loadConfig() {
+    VisualizerConfig config = new VisualizerConfig(); // defaults
+
+    File configDir = new File(
+        Environment.getExternalStorageDirectory(),
+        "Android/media/" + getPackageName()
+    );
+    if (!configDir.exists()) {
+        configDir.mkdirs();
+    }
+
+    File configFile = new File(configDir, "config.yaml");
+    if (!configFile.exists()) {
+        // Create a default config file so the user can edit it
+        try (FileWriter writer = new FileWriter(configFile)) {
+            writer.write(
+                "# Visualizer Configuration\n" +
+                "barCount: 128\n" +
+                "heightScale: 0.6\n" +
+                "smoothingFactor: 0.6\n" +
+                "updateIntervalMs: 50\n" +
+                "colorArgb: 0xFF00FFFF\n"
+            );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return config;
+    }
+
+    // Parse YAML
+    try (FileReader reader = new FileReader(configFile)) {
+        Yaml yaml = new Yaml();
+        Map<String, Object> data = yaml.load(reader);
+        if (data != null) {
+            if (data.containsKey("barCount")) config.barCount = (int) data.get("barCount");
+            if (data.containsKey("heightScale")) config.heightScale = ((Number) data.get("heightScale")).floatValue();
+            if (data.containsKey("smoothingFactor")) config.smoothingFactor = ((Number) data.get("smoothingFactor")).floatValue();
+            if (data.containsKey("updateIntervalMs")) config.updateIntervalMs = (int) data.get("updateIntervalMs");
+            if (data.containsKey("colorArgb")) config.colorArgb = (int) data.get("colorArgb");
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+        // fallback to defaults
+    }
+    return config;
+}
 }
