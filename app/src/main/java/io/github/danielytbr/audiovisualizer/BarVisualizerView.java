@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -21,36 +20,40 @@ public class BarVisualizerView extends View {
 
     public void updateFft(byte[] fft) {
         this.mFftData = fft;
-        invalidate(); // this triggers onDraw
+        invalidate();
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if (mFftData.length == 0) return;
+        if (mFftData.length < 4) return; // Need at least DC + one bin
 
         int width = getWidth();
         int height = getHeight();
 
-        // FFT data: first half is real, second half is imaginary.
-        // We just use the magnitudes from the first half.
-        int barCount = Math.min(mFftData.length / 2, 128); // limit to 128 bars
+        // Number of frequency bins = fft.length / 2
+        int numBins = mFftData.length / 2;
+        int barCount = Math.min(numBins - 1, 128); // Skip DC (bin 0)
+
         float barWidth = (float) width / barCount;
 
-        for (int i = 0; i < barCount; i++) {
-            // Convert byte to magnitude (0 to 255)
-            int magnitude = mFftData[i] & 0xFF;
-            float barHeight = (float) magnitude / 255 * height;
+        for (int i = 1; i <= barCount; i++) {
+            // Get real and imaginary parts for this frequency bin
+            float real = mFftData[2 * i] & 0xFF;
+            float imag = mFftData[2 * i + 1] & 0xFF;
 
-            // Draw each bar (skip tiny ones for a cleaner look)
-            if (barHeight > 5) {
-                canvas.drawRect(
-                        i * barWidth,
-                        height - barHeight,
-                        i * barWidth + barWidth - 2,
-                        height,
-                        mPaint
-                );
+            // Compute true magnitude
+            float magnitude = (float) Math.sqrt(real * real + imag * imag);
+
+            // Normalize: max possible is ~360 (sqrt(255^2 + 255^2))
+            float normalized = Math.min(1f, magnitude / 255f);
+            float barHeight = normalized * height;
+
+            // Draw if visible
+            if (barHeight > 2) {
+                float left = (i - 1) * barWidth;
+                float right = left + barWidth - 2;
+                canvas.drawRect(left, height - barHeight, right, height, mPaint);
             }
         }
     }
