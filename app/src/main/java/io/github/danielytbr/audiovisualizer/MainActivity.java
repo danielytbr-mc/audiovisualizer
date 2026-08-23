@@ -27,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
 
       byte[] testFft = new byte[256];
       for (int i = 0; i < testFft.length; i++) {
-          testFft[i] = (byte) (Math.sin(i * 0.3) * 100 + 128);
+          testFft[i] = (byte) (Math.sin(i * 0.3) * (Math.random() * 100) + 128);
       }
       mVisualizerView.updateFft(testFft);
 
