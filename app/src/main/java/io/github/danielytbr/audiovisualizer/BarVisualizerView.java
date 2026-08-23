@@ -1,4 +1,4 @@
-package io.github.danielytbr.audiovisualizer
+package io.github.danielytbr.audiovisualizer;
 
 import android.content.Context;
 import android.graphics.Canvas;
