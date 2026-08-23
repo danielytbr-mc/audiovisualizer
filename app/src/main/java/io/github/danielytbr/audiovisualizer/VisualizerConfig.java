@@ -4,7 +4,7 @@ public class VisualizerConfig {
     public int barCount = 128;
     public float heightScale = 0.6f;
     public float smoothingFactor = 0.6f;
-    public int updateIntervalMs = 50;
+    public int updateIntervalMs = 1024;
     public int colorArgb = 0xFF00FFFF; // cyan
-    public bool toasts = false;
+    public boolean toasts = false;
 }
