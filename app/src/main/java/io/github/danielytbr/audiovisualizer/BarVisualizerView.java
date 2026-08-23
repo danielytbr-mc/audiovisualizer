@@ -22,38 +22,38 @@ public class BarVisualizerView extends View {
         invalidate();
     }
 
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-        if (mFftData.length < 4) return; // Need at least DC + one bin
+@Override
+protected void onDraw(Canvas canvas) {
+    super.onDraw(canvas);
+    if (mFftData.length < 4) return;
 
-        int width = getWidth();
-        int height = getHeight() / 3;
+    int width = getWidth();
+    int height = getHeight();
 
-        // Number of frequency bins = fft.length / 2
-        int numBins = mFftData.length / 2;
-        int barCount = Math.min(numBins - 1, 128); // Skip DC (bin 0)
+    int numBins = mFftData.length / 2;
+    int barCount = Math.min(numBins - 1, 128);
+    float barWidth = (float) width / barCount;
 
-        float barWidth = (float) width / barCount;
+    // The bottom of the canvas is always 'height'
+    float bottomY = height;
 
-        for (int i = 1; i <= barCount; i++) {
-            // Get real and imaginary parts for this frequency bin
-            float real = mFftData[2 * i] & 0xFF;
-            float imag = mFftData[2 * i + 1] & 0xFF;
+    for (int i = 1; i <= barCount; i++) {
+        float real = mFftData[2 * i] & 0xFF;
+        float imag = mFftData[2 * i + 1] & 0xFF;
+        float magnitude = (float) Math.sqrt(real * real + imag * imag);
+        float normalized = Math.min(1f, magnitude / 255f);
 
-            // Compute true magnitude
-            float magnitude = (float) Math.sqrt(real * real + imag * imag);
+        // Bar height scales from 0 to height
+        float barHeight = normalized * height;
 
-            // Normalize: max possible is ~360 (sqrt(255^2 + 255^2))
-            float normalized = Math.min(1f, magnitude / 255f);
-            float barHeight = normalized * height;
+        // Top is height - barHeight, bottom is height
+        float topY = height - barHeight;
+        float leftX = (i - 1) * barWidth;
+        float rightX = leftX + barWidth - 2;
 
-            // Draw if visible
-            if (barHeight > 2) {
-                float left = (i - 1) * barWidth;
-                float right = left + barWidth - 2;
-                canvas.drawRect(left, height - barHeight, right, height, mPaint);
-            }
+        if (barHeight > 2) {
+            canvas.drawRect(leftX, topY, rightX, bottomY, mPaint);
         }
     }
+}
 }
