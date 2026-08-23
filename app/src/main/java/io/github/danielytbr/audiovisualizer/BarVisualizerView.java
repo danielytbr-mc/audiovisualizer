@@ -90,6 +90,7 @@ public class BarVisualizerView extends View {
                 float left = (i - 1) * barWidth;
                 float right = left + barWidth - 2;
                 float top = height - barHeight;
+                mPaint.setColor(mColor);
                 canvas.drawRect(left, top, right, height, mPaint);
             }
         }
