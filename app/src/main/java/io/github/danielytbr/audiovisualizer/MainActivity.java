@@ -36,69 +36,62 @@ public class MainActivity extends AppCompatActivity {
         setupVisualizer();
     }
 
-    private void setupVisualizer() {
-        try {
-            // 1. Load the audio file from res/raw/test
-            //    (rename your file to test.mp3, test.m4a, etc. – resource name is "test")
-            mPlayer = MediaPlayer.create(this, R.raw.test);
-
-            if (mPlayer == null) {
-                Toast.makeText(this, "❌ File not found or corrupt! Check res/raw/test", Toast.LENGTH_LONG).show();
-                return;
-            }
-
-            Toast.makeText(this, "✅ File loaded! Duration: " + mPlayer.getDuration() + "ms", Toast.LENGTH_SHORT).show();
-
-            // 2. Start playing
-            mPlayer.start();
-
-            if (mPlayer.isPlaying()) {
-                Toast.makeText(this, "🔊 Playing... you should hear audio", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "⚠️ Not playing – check file codec or volume", Toast.LENGTH_SHORT).show();
-            }
-
-            // Set capture size
-            int captureSize = Visualizer.getCaptureSizeRange()[1];
-            mVisualizer.setCaptureSize(captureSize);
-
-            // 3. Attach Visualizer
-            mVisualizer = new Visualizer(mPlayer.getAudioSessionId());
-            mVisualizer.setEnabled(true);
-
-            if (mVisualizer.getEnabled()) {
-                Toast.makeText(this, "📊 Visualizer ENABLED", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "❌ Visualizer FAILED – permission denied?", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            // 4. Set up the listener
-            mVisualizer.setDataCaptureListener(new Visualizer.OnDataCaptureListener() {
-                @Override
-                public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {
-                    // Not used
-                }
-
-                @Override
-                public void onFftDataCapture(Visualizer visualizer, byte[] fft, int samplingRate) {
-                    // Show toast only once when first data arrives
-                    if (!mFirstFftReceived) {
-                        mFirstFftReceived = true;
-                        runOnUiThread(() ->
-                            Toast.makeText(MainActivity.this, "🎵 FFT Data arriving! Length: " + fft.length, Toast.LENGTH_SHORT).show()
-                        );
-                    }
-                    // Update the view
-                    runOnUiThread(() -> mVisualizerView.updateFft(fft));
-                }
-            }, Visualizer.getMaxCaptureRate(), false, true);
-
-        } catch (Exception e) {
-            Toast.makeText(this, "❌ Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            e.printStackTrace();
+private void setupVisualizer() {
+    try {
+        // 1. Load file
+        mPlayer = MediaPlayer.create(this, R.raw.test);
+        if (mPlayer == null) {
+            Toast.makeText(this, "❌ File missing!", Toast.LENGTH_LONG).show();
+            return;
         }
+        Toast.makeText(this, "✅ File loaded! Duration: " + mPlayer.getDuration() + "ms", Toast.LENGTH_SHORT).show();
+
+        mPlayer.start();
+        if (mPlayer.isPlaying()) {
+            Toast.makeText(this, "🔊 Playing...", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "⚠️ Not playing", Toast.LENGTH_SHORT).show();
+        }
+
+        // 2. Create Visualizer
+        mVisualizer = new Visualizer(mPlayer.getAudioSessionId());
+
+        // 3. Set capture size BEFORE enabling
+        int[] range = Visualizer.getCaptureSizeRange();
+        int captureSize = Math.min(range[1], 1024); // safe max
+        mVisualizer.setCaptureSize(captureSize);
+
+        // 4. Now enable it
+        mVisualizer.setEnabled(true);
+        if (mVisualizer.getEnabled()) {
+            Toast.makeText(this, "📊 Visualizer ready", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "❌ Visualizer enable failed", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // 5. Set listener
+        mVisualizer.setDataCaptureListener(new Visualizer.OnDataCaptureListener() {
+            @Override
+            public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {}
+
+            @Override
+            public void onFftDataCapture(Visualizer visualizer, byte[] fft, int samplingRate) {
+                if (!mFirstFftReceived) {
+                    mFirstFftReceived = true;
+                    runOnUiThread(() ->
+                        Toast.makeText(MainActivity.this, "🎵 FFT data arriving!", Toast.LENGTH_SHORT).show()
+                    );
+                }
+                runOnUiThread(() -> mVisualizerView.updateFft(fft));
+            }
+        }, Visualizer.getMaxCaptureRate(), false, true);
+
+    } catch (Exception e) {
+        Toast.makeText(this, "❌ Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        e.printStackTrace();
     }
+}
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
