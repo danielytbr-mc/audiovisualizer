@@ -17,6 +17,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, 1);
+            return; // The visualizer code will run after the user grants it
+        }
+
         mVisualizerView = findViewById(R.id.visualizer_view);
 
         // Put an MP3 file in your device's Music folder, or change this path
