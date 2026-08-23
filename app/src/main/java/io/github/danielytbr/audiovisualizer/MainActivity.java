@@ -43,31 +43,52 @@ public class MainActivity extends AppCompatActivity {
 
 private void setupVisualizer() {
     try {
-        AssetFileDescriptor afd = getResources().openRawResourceFd(R.raw.test);
-        mPlayer = new MediaPlayer();
-        mPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-        afd.close();
-        mPlayer.prepare();
+        // 1. Load the file using the shortcut (returns a PREPARED player)
+        mPlayer = MediaPlayer.create(this, R.raw.test);
 
+        if (mPlayer == null) {
+            Log.e("Visualizer", "MediaPlayer.create() returned NULL! File not found or corrupted.");
+            return;
+        }
+
+        Log.d("Visualizer", "MediaPlayer created successfully. Duration: " + mPlayer.getDuration() + "ms");
+
+        // 2. Check if it's actually playing (start it)
+        mPlayer.start();
+
+        if (mPlayer.isPlaying()) {
+            Log.d("Visualizer", "MediaPlayer is PLAYING. You should hear audio.");
+        } else {
+            Log.d("Visualizer", "MediaPlayer is NOT playing. Check volume or file codec.");
+        }
+
+        // 3. Attach Visualizer
         mVisualizer = new Visualizer(mPlayer.getAudioSessionId());
         mVisualizer.setEnabled(true);
+
+        // Check if Visualizer actually enabled
+        if (mVisualizer.getEnabled()) {
+            Log.d("Visualizer", "Visualizer ENABLED successfully.");
+        } else {
+            Log.d("Visualizer", "Visualizer FAILED to enable.");
+        }
+
         mVisualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]);
 
         mVisualizer.setDataCaptureListener(new Visualizer.OnDataCaptureListener() {
             @Override
-            public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {
-                // Not used
-            }
+            public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {}
 
             @Override
             public void onFftDataCapture(Visualizer visualizer, byte[] fft, int samplingRate) {
+                // This log will prove if data is arriving!
+                Log.d("Visualizer", "✅ FFT Data Arriving! Length: " + fft.length);
                 runOnUiThread(() -> mVisualizerView.updateFft(fft));
             }
         }, Visualizer.getMaxCaptureRate(), false, true);
 
-        mPlayer.start();
-
     } catch (Exception e) {
+        Log.e("Visualizer", "Setup crashed: " + e.getMessage());
         e.printStackTrace();
     }
 }
