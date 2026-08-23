@@ -1,10 +1,15 @@
+// if ur wondering, yes, i used sm ai while coding, but im gonna edit it myself later
 package io.github.danielytbr.audiovisualizer;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.media.audiofx.Visualizer;
 import android.os.Bundle;
 import android.os.Environment;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -17,14 +22,19 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, 1);
-            return; // The visualizer code will run after the user grants it
-        }
-
         mVisualizerView = findViewById(R.id.visualizer_view);
 
-        // Put an MP3 file in your device's Music folder, or change this path
+        // Check permission
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.RECORD_AUDIO}, 1);
+        } else {
+            setupVisualizer();
+        }
+    }
+
+    private void setupVisualizer() {
         String audioPath = Environment.getExternalStorageDirectory().getPath() + "/Music/test.mp3";
 
         try {
@@ -32,23 +42,21 @@ public class MainActivity extends AppCompatActivity {
             mPlayer.setDataSource(audioPath);
             mPlayer.prepare();
 
-            // Attach the visualizer to the player's audio session
             mVisualizer = new Visualizer(mPlayer.getAudioSessionId());
             mVisualizer.setEnabled(true);
-            mVisualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]); // max quality
+            mVisualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]);
 
             mVisualizer.setDataCaptureListener(new Visualizer.OnDataCaptureListener() {
                 @Override
-                public void onWaveFormDataCapture(byte[] waveform, int samplingRate) {
-                    // Not used, but must be implemented
+                public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {
+                    // Not used
                 }
 
                 @Override
-                public void onFftDataCapture(byte[] fft, int samplingRate) {
-                    // Update the bars on the UI thread
+                public void onFftDataCapture(Visualizer visualizer, byte[] fft, int samplingRate) {
                     runOnUiThread(() -> mVisualizerView.updateFft(fft));
                 }
-            }, Visualizer.getMaxCaptureRate(), false, true); // waveform=false, fft=true
+            }, Visualizer.getMaxCaptureRate(), false, true);
 
             mPlayer.start();
 
@@ -57,14 +65,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-        @Override
-        public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-            if (requestCode == 1 && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Re-run your setup code here
-                setupVisualizer();
-            }
+        if (requestCode == 1 && grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            setupVisualizer();
         }
+    }
 
     @Override
     protected void onDestroy() {
