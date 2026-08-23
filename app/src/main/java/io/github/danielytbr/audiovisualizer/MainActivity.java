@@ -34,36 +34,36 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void setupVisualizer() {
-        try {
-            AssetFileDescriptor afd = getResources().openRawResourceFd(R.raw.test);
-            
-            mPlayer = new MediaPlayer(afd);
-            mPlayer.setDataSource();
-            mPlayer.prepare();
+private void setupVisualizer() {
+    try {
+        AssetFileDescriptor afd = getResources().openRawResourceFd(R.raw.test);
+        mPlayer = new MediaPlayer();
+        mPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+        afd.close();
+        mPlayer.prepare();
 
-            mVisualizer = new Visualizer(mPlayer.getAudioSessionId());
-            mVisualizer.setEnabled(true);
-            mVisualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]);
+        mVisualizer = new Visualizer(mPlayer.getAudioSessionId());
+        mVisualizer.setEnabled(true);
+        mVisualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]);
 
-            mVisualizer.setDataCaptureListener(new Visualizer.OnDataCaptureListener() {
-                @Override
-                public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {
-                    // Not used
-                }
+        mVisualizer.setDataCaptureListener(new Visualizer.OnDataCaptureListener() {
+            @Override
+            public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {
+                // Not used
+            }
 
-                @Override
-                public void onFftDataCapture(Visualizer visualizer, byte[] fft, int samplingRate) {
-                    runOnUiThread(() -> mVisualizerView.updateFft(fft));
-                }
-            }, Visualizer.getMaxCaptureRate(), false, true);
+            @Override
+            public void onFftDataCapture(Visualizer visualizer, byte[] fft, int samplingRate) {
+                runOnUiThread(() -> mVisualizerView.updateFft(fft));
+            }
+        }, Visualizer.getMaxCaptureRate(), false, true);
 
-            mPlayer.start();
+        mPlayer.start();
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+}
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
