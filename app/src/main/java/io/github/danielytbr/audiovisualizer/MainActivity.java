@@ -35,11 +35,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupVisualizer() {
-        String audioPath = Environment.getExternalStorageDirectory().getPath() + "/Music/test.mp3";
-
         try {
-            mPlayer = new MediaPlayer();
-            mPlayer.setDataSource(audioPath);
+            AssetFileDescriptor afd = getResources().openRawResourceFd(R.raw.test);
+            
+            mPlayer = new MediaPlayer(afd);
+            mPlayer.setDataSource();
             mPlayer.prepare();
 
             mVisualizer = new Visualizer(mPlayer.getAudioSessionId());
