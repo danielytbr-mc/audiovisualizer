@@ -6,17 +6,17 @@ import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.media.audiofx.Visualizer;
 import android.os.Bundle;
-import android.os.Environment;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import android.content.res.AssetFileDescriptor;
 
 public class MainActivity extends AppCompatActivity {
 
     private MediaPlayer mPlayer;
     private Visualizer mVisualizer;
     private BarVisualizerView mVisualizerView;
+    private boolean mFirstFftReceived = false; // to avoid spam
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,80 +25,90 @@ public class MainActivity extends AppCompatActivity {
 
         mVisualizerView = findViewById(R.id.visualizer_view);
 
-      byte[] testFft = new byte[256];
-      for (int i = 0; i < testFft.length; i++) {
-          testFft[i] = (byte) (Math.sin(i * 0.3) * (Math.random() * 100) + 128);
-      }
-      mVisualizerView.updateFft(testFft);
-
         // Check permission
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.RECORD_AUDIO}, 1);
-        } else {
-            setupVisualizer();
-        }
-    }
-
-private void setupVisualizer() {
-    try {
-        // 1. Load the file using the shortcut (returns a PREPARED player)
-        mPlayer = MediaPlayer.create(this, R.raw.test);
-
-        if (mPlayer == null) {
-            Log.e("Visualizer", "MediaPlayer.create() returned NULL! File not found or corrupted.");
+            // Return early – setup will be called after user responds
             return;
         }
-
-        Log.d("Visualizer", "MediaPlayer created successfully. Duration: " + mPlayer.getDuration() + "ms");
-
-        // 2. Check if it's actually playing (start it)
-        mPlayer.start();
-
-        if (mPlayer.isPlaying()) {
-            Log.d("Visualizer", "MediaPlayer is PLAYING. You should hear audio.");
-        } else {
-            Log.d("Visualizer", "MediaPlayer is NOT playing. Check volume or file codec.");
-        }
-
-        // 3. Attach Visualizer
-        mVisualizer = new Visualizer(mPlayer.getAudioSessionId());
-        mVisualizer.setEnabled(true);
-
-        // Check if Visualizer actually enabled
-        if (mVisualizer.getEnabled()) {
-            Log.d("Visualizer", "Visualizer ENABLED successfully.");
-        } else {
-            Log.d("Visualizer", "Visualizer FAILED to enable.");
-        }
-
-        mVisualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]);
-
-        mVisualizer.setDataCaptureListener(new Visualizer.OnDataCaptureListener() {
-            @Override
-            public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {}
-
-            @Override
-            public void onFftDataCapture(Visualizer visualizer, byte[] fft, int samplingRate) {
-                // This log will prove if data is arriving!
-                Log.d("Visualizer", "✅ FFT Data Arriving! Length: " + fft.length);
-                runOnUiThread(() -> mVisualizerView.updateFft(fft));
-            }
-        }, Visualizer.getMaxCaptureRate(), false, true);
-
-    } catch (Exception e) {
-        Log.e("Visualizer", "Setup crashed: " + e.getMessage());
-        e.printStackTrace();
+        setupVisualizer();
     }
-}
+
+    private void setupVisualizer() {
+        try {
+            // 1. Load the audio file from res/raw/test
+            //    (rename your file to test.mp3, test.m4a, etc. – resource name is "test")
+            mPlayer = MediaPlayer.create(this, R.raw.test);
+
+            if (mPlayer == null) {
+                Toast.makeText(this, "❌ File not found or corrupt! Check res/raw/test", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            Toast.makeText(this, "✅ File loaded! Duration: " + mPlayer.getDuration() + "ms", Toast.LENGTH_SHORT).show();
+
+            // 2. Start playing
+            mPlayer.start();
+
+            if (mPlayer.isPlaying()) {
+                Toast.makeText(this, "🔊 Playing... you should hear audio", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "⚠️ Not playing – check file codec or volume", Toast.LENGTH_SHORT).show();
+            }
+
+            // 3. Attach Visualizer
+            mVisualizer = new Visualizer(mPlayer.getAudioSessionId());
+            mVisualizer.setEnabled(true);
+
+            if (mVisualizer.getEnabled()) {
+                Toast.makeText(this, "📊 Visualizer ENABLED", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "❌ Visualizer FAILED – permission denied?", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Set capture size
+            int captureSize = Visualizer.getCaptureSizeRange()[1];
+            mVisualizer.setCaptureSize(captureSize);
+
+            // 4. Set up the listener
+            mVisualizer.setDataCaptureListener(new Visualizer.OnDataCaptureListener() {
+                @Override
+                public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {
+                    // Not used
+                }
+
+                @Override
+                public void onFftDataCapture(Visualizer visualizer, byte[] fft, int samplingRate) {
+                    // Show toast only once when first data arrives
+                    if (!mFirstFftReceived) {
+                        mFirstFftReceived = true;
+                        runOnUiThread(() ->
+                            Toast.makeText(MainActivity.this, "🎵 FFT Data arriving! Length: " + fft.length, Toast.LENGTH_SHORT).show()
+                        );
+                    }
+                    // Update the view
+                    runOnUiThread(() -> mVisualizerView.updateFft(fft));
+                }
+            }, Visualizer.getMaxCaptureRate(), false, true);
+
+        } catch (Exception e) {
+            Toast.makeText(this, "❌ Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 1 && grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "✅ Permission granted – starting visualizer", Toast.LENGTH_SHORT).show();
             setupVisualizer();
+        } else {
+            Toast.makeText(this, "❌ Permission denied – can't access audio", Toast.LENGTH_LONG).show();
         }
     }
 
