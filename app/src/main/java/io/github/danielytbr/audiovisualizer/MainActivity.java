@@ -73,7 +73,7 @@ private void setupVisualizer() {
         }
 
         // 4. Set listener BEFORE enabling (important!)
-        int rate = Visualizer.getMaxCaptureRate() / 2; // conservative
+        int rate = 1000 / 30;
         mVisualizer.setDataCaptureListener(new Visualizer.OnDataCaptureListener() {
             @Override
             public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {
