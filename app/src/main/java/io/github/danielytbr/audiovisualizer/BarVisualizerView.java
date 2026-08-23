@@ -52,7 +52,7 @@ protected void onDraw(Canvas canvas) {
         float rightX = leftX + barWidth - 2;
 
         if (barHeight > 2) {
-            canvas.drawRect(leftX, topY, rightX, bottomY, mPaint);
+            canvas.drawRect(leftX, topY / 3, rightX, bottomY, mPaint);
         }
     }
 }
