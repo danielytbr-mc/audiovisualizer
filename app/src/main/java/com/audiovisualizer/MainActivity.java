@@ -1,8 +1,8 @@
-package com.audiovisualizer;
+package io.github.danielytbr.audiovisualizer;
 
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
-import com.audiovisualizer.databinding.ActivityMainBinding;
+import io.github.danielytbr.audiovisualizer.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
 
