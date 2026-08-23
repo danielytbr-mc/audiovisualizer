@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
 
 private void setupVisualizer() {
     try {
-        // 1. Load file
+        // 1. Load file (using a loud, known MP3)
         mPlayer = MediaPlayer.create(this, R.raw.test);
         if (mPlayer == null) {
             Toast.makeText(this, "❌ File missing!", Toast.LENGTH_LONG).show();
@@ -46,49 +46,46 @@ private void setupVisualizer() {
         }
         Toast.makeText(this, "✅ File loaded! Duration: " + mPlayer.getDuration() + "ms", Toast.LENGTH_SHORT).show();
 
+        // Loop it so we get continuous data
+        mPlayer.setLooping(true);
         mPlayer.start();
-        if (mPlayer.isPlaying()) {
-            Toast.makeText(this, "🔊 Playing...", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this, "⚠️ Not playing", Toast.LENGTH_SHORT).show();
+
+        if (!mPlayer.isPlaying()) {
+            Toast.makeText(this, "⚠️ Not playing – check volume", Toast.LENGTH_SHORT).show();
             return;
         }
+        Toast.makeText(this, "🔊 Playing (looping)...", Toast.LENGTH_SHORT).show();
 
-        // 2. Create Visualizer
-        mVisualizer = new Visualizer(mPlayer.getAudioSessionId());
+        // 2. Create Visualizer with session ID
+        int sessionId = mPlayer.getAudioSessionId();
+        Toast.makeText(this, "🎧 Session ID: " + sessionId, Toast.LENGTH_SHORT).show();
 
-        // 3. Force a small, safe capture size (512)
-        int captureSize = 512;
+        mVisualizer = new Visualizer(sessionId);
+
+        // 3. Set capture size (256 = safe on all devices)
         try {
-            mVisualizer.setCaptureSize(captureSize);
-            Toast.makeText(this, "🔧 Capture size set to " + captureSize, Toast.LENGTH_SHORT).show();
+            mVisualizer.setCaptureSize(256);
+            Toast.makeText(this, "🔧 Capture size set to 256", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             Toast.makeText(this, "❌ setCaptureSize failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // 4. Enable the Visualizer
-        mVisualizer.setEnabled(true);
-        if (mVisualizer.getEnabled()) {
-            Toast.makeText(this, "📊 Visualizer ENABLED", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this, "❌ Visualizer enable failed", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // 5. Set listener with a conservative rate (half the max)
-        int rate = Visualizer.getMaxCaptureRate() / 2; // e.g., 10000 Hz
+        // 4. Set listener BEFORE enabling (important!)
+        int rate = Visualizer.getMaxCaptureRate() / 2; // conservative
         mVisualizer.setDataCaptureListener(new Visualizer.OnDataCaptureListener() {
             @Override
             public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {
-                // Waveform not used, but we'll show a toast once to confirm it works
+                // Waveform arrived! We'll use this as a fallback.
                 if (!mFirstFftReceived) {
                     mFirstFftReceived = true;
                     runOnUiThread(() ->
-                        Toast.makeText(MainActivity.this, "🌊 Waveform data arrived! (testing)", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(MainActivity.this, "🌊 Waveform data arrived! Using waveform instead of FFT.", Toast.LENGTH_LONG).show()
                     );
+                    // You could adapt your view to use waveform data here,
+                    // but for now we'll convert it to a simple bar display.
+                    runOnUiThread(() -> mVisualizerView.updateFft(waveform)); // waveform is byte[], works with your view
                 }
-                // Optionally update view with waveform? Not now.
             }
 
             @Override
@@ -101,9 +98,24 @@ private void setupVisualizer() {
                 }
                 runOnUiThread(() -> mVisualizerView.updateFft(fft));
             }
-        }, rate, true, true); // waveform=true, fft=true – both enabled for testing
+        }, rate, true, true); // waveform = true, fft = true
 
-        Toast.makeText(this, "👂 Listener attached with rate " + rate, Toast.LENGTH_SHORT).show();
+        // 5. Enable the Visualizer NOW (after listener)
+        mVisualizer.setEnabled(true);
+        if (mVisualizer.getEnabled()) {
+            Toast.makeText(this, "📊 Visualizer ENABLED (listener active)", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "❌ Visualizer enable failed", Toast.LENGTH_SHORT).show();
+        }
+
+        // 6. Fallback: if no data after 3 seconds, show a diagnostic toast
+        new Handler().postDelayed(() -> {
+            if (!mFirstFftReceived) {
+                runOnUiThread(() ->
+                    Toast.makeText(MainActivity.this, "⏰ No data after 3s. Check if audio file has sound or try a different MP3.", Toast.LENGTH_LONG).show()
+                );
+            }
+        }, 3000);
 
     } catch (Exception e) {
         Toast.makeText(this, "❌ Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
