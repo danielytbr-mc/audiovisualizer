@@ -51,41 +51,59 @@ private void setupVisualizer() {
             Toast.makeText(this, "🔊 Playing...", Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(this, "⚠️ Not playing", Toast.LENGTH_SHORT).show();
+            return;
         }
 
         // 2. Create Visualizer
         mVisualizer = new Visualizer(mPlayer.getAudioSessionId());
 
-        // 3. Set capture size BEFORE enabling
-        int[] range = Visualizer.getCaptureSizeRange();
-        int captureSize = Math.min(range[1], 1024); // safe max
-        mVisualizer.setCaptureSize(captureSize);
+        // 3. Force a small, safe capture size (512)
+        int captureSize = 512;
+        try {
+            mVisualizer.setCaptureSize(captureSize);
+            Toast.makeText(this, "🔧 Capture size set to " + captureSize, Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "❌ setCaptureSize failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-        // 4. Now enable it
+        // 4. Enable the Visualizer
         mVisualizer.setEnabled(true);
         if (mVisualizer.getEnabled()) {
-            Toast.makeText(this, "📊 Visualizer ready", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "📊 Visualizer ENABLED", Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(this, "❌ Visualizer enable failed", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // 5. Set listener
+        // 5. Set listener with a conservative rate (half the max)
+        int rate = Visualizer.getMaxCaptureRate() / 2; // e.g., 10000 Hz
         mVisualizer.setDataCaptureListener(new Visualizer.OnDataCaptureListener() {
             @Override
-            public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {}
+            public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {
+                // Waveform not used, but we'll show a toast once to confirm it works
+                if (!mFirstFftReceived) {
+                    mFirstFftReceived = true;
+                    runOnUiThread(() ->
+                        Toast.makeText(MainActivity.this, "🌊 Waveform data arrived! (testing)", Toast.LENGTH_SHORT).show()
+                    );
+                }
+                // Optionally update view with waveform? Not now.
+            }
 
             @Override
             public void onFftDataCapture(Visualizer visualizer, byte[] fft, int samplingRate) {
                 if (!mFirstFftReceived) {
                     mFirstFftReceived = true;
                     runOnUiThread(() ->
-                        Toast.makeText(MainActivity.this, "🎵 FFT data arriving!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(MainActivity.this, "🎵 FFT data arrived! Length: " + fft.length, Toast.LENGTH_SHORT).show()
                     );
                 }
                 runOnUiThread(() -> mVisualizerView.updateFft(fft));
             }
-        }, Visualizer.getMaxCaptureRate(), false, true);
+        }, rate, true, true); // waveform=true, fft=true – both enabled for testing
+
+        Toast.makeText(this, "👂 Listener attached with rate " + rate, Toast.LENGTH_SHORT).show();
 
     } catch (Exception e) {
         Toast.makeText(this, "❌ Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
