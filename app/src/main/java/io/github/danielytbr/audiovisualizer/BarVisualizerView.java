@@ -8,7 +8,6 @@ import android.util.AttributeSet;
 import android.view.View;
 
 public class BarVisualizerView extends View {
-
     private byte[] mFftData = new byte[0];
     private Paint mPaint = new Paint();
 
@@ -29,7 +28,7 @@ public class BarVisualizerView extends View {
         if (mFftData.length < 4) return; // Need at least DC + one bin
 
         int width = getWidth();
-        int height = getHeight();
+        int height = getHeight() / 3;
 
         // Number of frequency bins = fft.length / 2
         int numBins = mFftData.length / 2;
