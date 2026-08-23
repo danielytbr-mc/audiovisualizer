@@ -26,6 +26,24 @@ public class MainActivity extends AppCompatActivity {
 
         mVisualizerView = findViewById(R.id.visualizer_view);
 
+        VisualizerConfig config = loadConfig();
+
+// Update the view with these settings
+mVisualizerView.setBarCount(config.barCount);
+mVisualizerView.setHeightScale(config.heightScale);
+mVisualizerView.setSmoothingFactor(config.smoothingFactor);
+mVisualizerView.setColor(config.colorArgb);
+
+// Also adjust the listener rate
+int rate = config.updateIntervalMs; // in milliseconds, but the listener expects Hz
+// Convert: rate = 1000 / updateIntervalMs
+int listenerRate = 1000 / config.updateIntervalMs;
+// BUT the Visualizer rate is in milliseconds? Actually it's in Hz (captures per second). 
+// The setDataCaptureListener's rate parameter is in Hz (captures per second).
+// So if you want 50ms interval, set rate = 20 (20 Hz).
+// We'll adjust: 
+mVisualizer.setDataCaptureListener(..., 1000 / config.updateIntervalMs, ...);
+
         // Check permission
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
