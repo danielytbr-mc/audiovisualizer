@@ -60,23 +60,23 @@ public class MainActivity extends AppCompatActivity {
             // 3. Load audio file
             mPlayer = MediaPlayer.create(this, R.raw.test);
             if (mPlayer == null) {
-                Toast.makeText(this, "❌ File missing!", Toast.LENGTH_LONG).show();
+                if (config.toasts == true) Toast.makeText(this, "❌ File missing!", Toast.LENGTH_LONG).show();
                 return;
             }
-            Toast.makeText(this, "✅ File loaded! Duration: " + mPlayer.getDuration() + "ms", Toast.LENGTH_SHORT).show();
+            if (config.toasts == true) Toast.makeText(this, "✅ File loaded! Duration: " + mPlayer.getDuration() + "ms", Toast.LENGTH_SHORT).show();
 
             mPlayer.setLooping(true);
             mPlayer.start();
 
             if (!mPlayer.isPlaying()) {
-                Toast.makeText(this, "⚠️ Not playing – check volume", Toast.LENGTH_SHORT).show();
+                if (config.toasts == true) Toast.makeText(this, "⚠️ Not playing – check volume", Toast.LENGTH_SHORT).show();
                 return;
             }
-            Toast.makeText(this, "🔊 Playing (looping)...", Toast.LENGTH_SHORT).show();
+            if (config.toasts == true) Toast.makeText(this, "🔊 Playing (looping)...", Toast.LENGTH_SHORT).show();
 
             // 4. Create Visualizer
             int sessionId = mPlayer.getAudioSessionId();
-            Toast.makeText(this, "🎧 Session ID: " + sessionId, Toast.LENGTH_SHORT).show();
+            if (config.toasts == true) Toast.makeText(this, "🎧 Session ID: " + sessionId, Toast.LENGTH_SHORT).show();
 
             mVisualizer = new Visualizer(sessionId);
             mVisualizer.setCaptureSize(256);
@@ -89,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
                     if (!mFirstFftReceived) {
                         mFirstFftReceived = true;
                         runOnUiThread(() ->
-                                Toast.makeText(MainActivity.this, "🌊 Waveform data arrived!", Toast.LENGTH_SHORT).show()
+                                if (config.toasts == true) Toast.makeText(MainActivity.this, "🌊 Waveform data arrived!", Toast.LENGTH_SHORT).show()
                         );
                     }
                     // Optionally use waveform as fallback
@@ -101,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
                     if (!mFirstFftReceived) {
                         mFirstFftReceived = true;
                         runOnUiThread(() ->
-                                Toast.makeText(MainActivity.this, "🎵 FFT data arrived! Length: " + fft.length, Toast.LENGTH_SHORT).show()
+                                if (config.toasts == true) Toast.makeText(MainActivity.this, "🎵 FFT data arrived! Length: " + fft.length, Toast.LENGTH_SHORT).show()
                         );
                     }
                     runOnUiThread(() -> mVisualizerView.updateFft(fft));
@@ -111,22 +111,22 @@ public class MainActivity extends AppCompatActivity {
             // 6. Enable Visualizer
             mVisualizer.setEnabled(true);
             if (mVisualizer.getEnabled()) {
-                Toast.makeText(this, "📊 Visualizer ENABLED", Toast.LENGTH_SHORT).show();
+                if (config.toasts == true) Toast.makeText(this, "📊 Visualizer ENABLED", Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(this, "❌ Visualizer enable failed", Toast.LENGTH_SHORT).show();
+                if (config.toasts == true) Toast.makeText(this, "❌ Visualizer enable failed", Toast.LENGTH_SHORT).show();
             }
 
             // 7. Fallback timeout (no data after 3s)
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
                 if (!mFirstFftReceived) {
                     runOnUiThread(() ->
-                            Toast.makeText(MainActivity.this, "⏰ No data after 3s. Check audio file.", Toast.LENGTH_LONG).show()
+                            if (config.toasts == true) Toast.makeText(MainActivity.this, "⏰ No data after 3s. Check audio file.", Toast.LENGTH_LONG).show()
                     );
                 }
             }, 3000);
 
         } catch (Exception e) {
-            Toast.makeText(this, "❌ Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            if (config.toasts == true) Toast.makeText(this, "❌ Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
             e.printStackTrace();
         }
     }
@@ -185,10 +185,10 @@ public class MainActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 1 && grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "✅ Permission granted – starting visualizer", Toast.LENGTH_SHORT).show();
+            if (config.toasts == true) Toast.makeText(this, "✅ Permission granted – starting visualizer", Toast.LENGTH_SHORT).show();
             setupVisualizer();
         } else {
-            Toast.makeText(this, "❌ Permission denied – can't access audio", Toast.LENGTH_LONG).show();
+            if (config.toasts == true) Toast.makeText(this, "❌ Permission denied – can't access audio", Toast.LENGTH_LONG).show();
         }
     }
 
