@@ -58,6 +58,10 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "⚠️ Not playing – check file codec or volume", Toast.LENGTH_SHORT).show();
             }
 
+            // Set capture size
+            int captureSize = Visualizer.getCaptureSizeRange()[1];
+            mVisualizer.setCaptureSize(captureSize);
+
             // 3. Attach Visualizer
             mVisualizer = new Visualizer(mPlayer.getAudioSessionId());
             mVisualizer.setEnabled(true);
@@ -68,10 +72,6 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "❌ Visualizer FAILED – permission denied?", Toast.LENGTH_SHORT).show();
                 return;
             }
-
-            // Set capture size
-            int captureSize = Visualizer.getCaptureSizeRange()[1];
-            mVisualizer.setCaptureSize(captureSize);
 
             // 4. Set up the listener
             mVisualizer.setDataCaptureListener(new Visualizer.OnDataCaptureListener() {
