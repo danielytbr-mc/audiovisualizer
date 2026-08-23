@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
             if (mPlayer == null) {
-                if (config.toasts) Toast.makeText(this, "❌ File missing!", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "File missing: " + filePath, Toast.LENGTH_LONG).show();
                 return;
             }
             if (config.toasts) Toast.makeText(this, "✅ File loaded! Duration: " + mPlayer.getDuration() + "ms", Toast.LENGTH_SHORT).show();
