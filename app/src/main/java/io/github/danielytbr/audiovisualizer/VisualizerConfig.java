@@ -6,4 +6,5 @@ public class VisualizerConfig {
     public float smoothingFactor = 0.6f;
     public int updateIntervalMs = 50;
     public int colorArgb = 0xFF00FFFF; // cyan
+    public bool toasts = false;
 }
