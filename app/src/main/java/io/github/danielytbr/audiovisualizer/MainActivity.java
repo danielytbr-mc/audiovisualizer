@@ -67,8 +67,7 @@ public class MainActivity extends AppCompatActivity {
         mPlayer = new MediaPlayer();
         try {
             mPlayer.setDataSource(config.filePath);
-            mPlayer.prepareAsync(); // Use async to avoid blocking the UI thread
-            // Optional: set a listener for when preparation completes
+            mPlayer.prepare();
             mPlayer.setOnPreparedListener(MediaPlayer::start);
         } catch (IOException e) {
             e.printStackTrace();
