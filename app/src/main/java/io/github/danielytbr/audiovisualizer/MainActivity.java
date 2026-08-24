@@ -286,12 +286,12 @@ public class MainActivity extends AppCompatActivity {
                 writer.write(
                         "# Visualizer Configuration\n" +
                         "# Edit and restart to apply.\n" +
-                        "barCount: 64\n" +
-                        "heightScale: 0.7\n" +
-                        "smoothingFactor: 0.6\n" +
-                        "updateIntervalMs: 50\n" +
+                        "barCount: 32\n" +
+                        "heightScale: 0.4\n" +
+                        "smoothingFactor: 0.5\n" +
+                        "updateIntervalMs: 1024 # apparently this is in hz\n" +
                         "colorArgb: 0xFF00FFFF\n" +
-                        "toasts: true\n" +
+                        "toasts: false\n" +
                         "useBuiltinFile: true\n" +
                         "filePath: \"/sdcard/Music/test.mp3\"\n"
                 );
