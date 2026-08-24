@@ -171,6 +171,8 @@ public class MainActivity extends AppCompatActivity {
                                 "smoothingFactor: 0.6\n" +
                                 "updateIntervalMs: 50\n" +
                                 "colorArgb: 0xFF00FFFF\n" +
+                                "backgroundColor: 0xFF222222\n" +
+                                "useBuiltinFile: false\n" +
                                 "toasts: false\n" +
                                 "filePath: \"/sdcard/Music/test.mp3\""
                 );
@@ -190,6 +192,10 @@ public class MainActivity extends AppCompatActivity {
                 if (data.containsKey("smoothingFactor")) config.smoothingFactor = ((Number) data.get("smoothingFactor")).floatValue();
                 if (data.containsKey("updateIntervalMs")) config.updateIntervalMs = (int) data.get("updateIntervalMs");
                 if (data.containsKey("colorArgb")) config.colorArgb = (int) data.get("colorArgb");
+                if (data.containsKey("backgroundColor")) config.backgroundColor = (int) data.get("backgroundColor");
+                if (data.containsKey("useBuiltinFile")) config.useBuiltinFile = (boolean) data.get("useBuiltinFile");
+                if (data.containsKey("toasts")) config.filePath = (String) data.get("toasts");
+                if (data.containsKey("filePath")) config.filePath = (String) data.get("filePath");
             }
         } catch (Exception e) {
             e.printStackTrace();
