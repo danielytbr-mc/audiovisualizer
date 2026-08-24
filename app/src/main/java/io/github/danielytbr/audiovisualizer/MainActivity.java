@@ -46,6 +46,13 @@ public class MainActivity extends AppCompatActivity {
                     new String[]{Manifest.permission.RECORD_AUDIO}, 1);
             return;
         }
+      // Check READ_EXTERNAL_STORAGE permission
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+            return;
+        }
         setupVisualizer();
     }
 
