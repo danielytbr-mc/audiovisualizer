@@ -8,4 +8,5 @@ public class VisualizerConfig {
     public int colorArgb = 0xFF00FFFF; // cyan
     public boolean toasts = false;
     public String filePath = "/sdcard/Music/test.mp3";
+    public boolean useBuiltinFile = false;
 }
