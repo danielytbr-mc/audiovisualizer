@@ -1,4 +1,4 @@
-// if ur wondering, yes, i used sm ai while coding, but im gonna edit it myself later
+// main
 package io.github.danielytbr.audiovisualizer;
 
 import android.Manifest;
