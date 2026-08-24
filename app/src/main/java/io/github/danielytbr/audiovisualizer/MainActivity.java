@@ -61,12 +61,12 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             // 3. Load audio file
-            String filePath = Environment.getExternalStorageDirectory().getAbsolutePath()
-                + "/Android/media/" + getPackageName() + "/song.mp3";
+            //String filePath = Environment.getExternalStorageDirectory().getAbsolutePath()
+            //    + "/Android/media/" + getPackageName() + "/song.mp3";
 
         mPlayer = new MediaPlayer();
         try {
-            mPlayer.setDataSource(filePath);
+            mPlayer.setDataSource(config.filePath);
             mPlayer.prepareAsync(); // Use async to avoid blocking the UI thread
             // Optional: set a listener for when preparation completes
             mPlayer.setOnPreparedListener(MediaPlayer::start);
@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
             if (mPlayer == null) {
-                Toast.makeText(this, "File missing: " + filePath, Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Error: Music file missing", Toast.LENGTH_LONG).show();
                 return;
             }
             if (config.toasts) Toast.makeText(this, "✅ File loaded! Duration: " + mPlayer.getDuration() + "ms", Toast.LENGTH_SHORT).show();
