@@ -1,4 +1,4 @@
-// main
+//main
 package io.github.danielytbr.audiovisualizer;
 
 import android.Manifest;
@@ -27,13 +27,10 @@ public class MainActivity extends AppCompatActivity {
     private MediaPlayer mPlayer;
     private Visualizer mVisualizer;
     private BarVisualizerView mVisualizerView;
-    private boolean mFirstDataReceived = false;
-    private VisualizerConfig config;
+    private boolean mFirstFftReceived = false;
 
-    // For manual FFT
-    private float[] mFftReal;
-    private float[] mFftImag;
-    private int mCaptureSize = 512; // must be power of 2
+    
+    private VisualizerConfig config;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,217 +50,100 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupVisualizer() {
+        // 1. Load configuration (assign to the field)
         config = loadConfig();
 
-        // Apply config to the view
+        // 2. Apply config to the view
         mVisualizerView.setBarCount(config.barCount);
         mVisualizerView.setHeightScale(config.heightScale);
         mVisualizerView.setSmoothingFactor(config.smoothingFactor);
         mVisualizerView.setColor(config.colorArgb);
 
         try {
-            // ---------- Load audio file ----------
-            mPlayer = new MediaPlayer();
+            // 3. Load audio file
+            //String filePath = Environment.getExternalStorageDirectory().getAbsolutePath()
+            //    + "/Android/media/" + getPackageName() + "/song.mp3";
 
-            // If useBuiltinFile is true, load from res/raw/test
-            if (config.useBuiltinFile) {
-                // Using MediaPlayer.create() loads from resources and prepares automatically
-                mPlayer = MediaPlayer.create(this, R.raw.test);
-                if (mPlayer == null) {
-                    showToast("❌ Built-in file not found (res/raw/test)");
-                    return;
-                }
-            } else {
-                // Load from external file path
-                File audioFile = new File(config.filePath);
-                if (!audioFile.exists()) {
-                    showToast("❌ File not found: " + config.filePath);
-                    return;
-                }
-                mPlayer.setDataSource(config.filePath);
-                mPlayer.prepare(); // synchronous, blocks until ready
+        mPlayer = new MediaPlayer();
+        try {
+            mPlayer.setDataSource(config.filePath);
+            mPlayer.prepare();
+            mPlayer.setOnPreparedListener(MediaPlayer::start);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+            if (mPlayer == null) {
+                Toast.makeText(this, "Error: Music file missing", Toast.LENGTH_LONG).show();
+                return;
             }
-
-            showToast("✅ File loaded! Duration: " + mPlayer.getDuration() + "ms");
+            if (config.toasts) Toast.makeText(this, "✅ File loaded! Duration: " + mPlayer.getDuration() + "ms", Toast.LENGTH_SHORT).show();
 
             mPlayer.setLooping(true);
             mPlayer.start();
 
             if (!mPlayer.isPlaying()) {
-                showToast("⚠️ Not playing – check volume or file codec");
+                if (config.toasts) Toast.makeText(this, "⚠️ Not playing – check volume", Toast.LENGTH_SHORT).show();
                 return;
             }
-            showToast("🔊 Playing (looping)...");
+            if (config.toasts) Toast.makeText(this, "🔊 Playing (looping)...", Toast.LENGTH_SHORT).show();
 
-            // ---------- Create Visualizer ----------
+            // 4. Create Visualizer
             int sessionId = mPlayer.getAudioSessionId();
-            showToast("🎧 Session ID: " + sessionId);
+            if (config.toasts) Toast.makeText(this, "🎧 Session ID: " + sessionId, Toast.LENGTH_SHORT).show();
 
             mVisualizer = new Visualizer(sessionId);
+            mVisualizer.setCaptureSize(256);
 
-            // Capture size must be power of 2 for our FFT
-            // Use the max possible that is a power of 2 (e.g., 512, 1024, 2048)
-            int[] range = Visualizer.getCaptureSizeRange();
-            int max = range[1];
-            // Find largest power of 2 <= max
-            int captureSize = 512;
-            while (captureSize * 2 <= max) {
-                captureSize *= 2;
-            }
-            mCaptureSize = captureSize;
-            mVisualizer.setCaptureSize(mCaptureSize);
-            showToast("📏 Capture size: " + mCaptureSize);
-
-            // ---------- Set up data listener ----------
-            int listenerRate = 1000 / config.updateIntervalMs; // Hz
-
+            // 5. Set listener with rate from config (convert ms to Hz)
+            int listenerRate = 1000 / config.updateIntervalMs; // e.g., 50ms → 20 Hz
             mVisualizer.setDataCaptureListener(new Visualizer.OnDataCaptureListener() {
                 @Override
                 public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {
-                    // This is our main path (manual FFT)
-                    processWaveform(waveform);
+                    if (!mFirstFftReceived) {
+                        mFirstFftReceived = true;
+                        
+                        runOnUiThread(() -> {
+                            if (config.toasts) Toast.makeText(MainActivity.this, "🌊 Waveform data arrived!", Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                    // Optionally use waveform as fallback
+                    runOnUiThread(() -> mVisualizerView.updateFft(waveform));
                 }
 
                 @Override
                 public void onFftDataCapture(Visualizer visualizer, byte[] fft, int samplingRate) {
-                    // If device supports hardware FFT, use it (skip manual)
-                    // But we'll still convert to magnitudes and use our view
-                    processHardwareFft(fft);
+                    if (!mFirstFftReceived) {
+                        mFirstFftReceived = true;
+                        
+                        runOnUiThread(() -> {
+                            if (config.toasts) Toast.makeText(MainActivity.this, "🎵 FFT data arrived! Length: " + fft.length, Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                    runOnUiThread(() -> mVisualizerView.updateFft(fft));
                 }
-            }, listenerRate, true, true); // waveform true, fft true
+            }, listenerRate, true, true);
 
-            // ---------- Enable Visualizer ----------
+            // 6. Enable Visualizer
             mVisualizer.setEnabled(true);
             if (mVisualizer.getEnabled()) {
-                showToast("📊 Visualizer ENABLED");
+                if (config.toasts) Toast.makeText(this, "📊 Visualizer ENABLED", Toast.LENGTH_SHORT).show();
             } else {
-                showToast("❌ Visualizer enable failed");
-                return;
+                if (config.toasts) Toast.makeText(this, "❌ Visualizer enable failed", Toast.LENGTH_SHORT).show();
             }
 
-            // ---------- Fallback timeout ----------
+            // 7. Fallback timeout (no data after 3s)
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                if (!mFirstDataReceived) {
-                    runOnUiThread(() ->
-                            showToast("⏰ No data after 3s. Check audio file or permissions.")
-                    );
+                if (!mFirstFftReceived) {
+                    
+                    runOnUiThread(() -> {
+                        if (config.toasts) Toast.makeText(MainActivity.this, "⏰ No data after 3s. Check audio file.", Toast.LENGTH_LONG).show();
+                    });
                 }
             }, 3000);
 
         } catch (Exception e) {
-            showToast("❌ Error: " + e.getMessage());
+            if (config.toasts) Toast.makeText(this, "❌ Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
             e.printStackTrace();
-        }
-    }
-
-    // ---------- Manual FFT on waveform ----------
-    private void processWaveform(byte[] waveform) {
-        if (waveform.length != mCaptureSize) return;
-
-        // Initialize arrays if needed
-        if (mFftReal == null || mFftReal.length != mCaptureSize) {
-            mFftReal = new float[mCaptureSize];
-            mFftImag = new float[mCaptureSize];
-        }
-
-        // 1. Convert bytes to floats (signed 8-bit PCM)
-        for (int i = 0; i < mCaptureSize; i++) {
-            mFftReal[i] = waveform[i]; // byte is signed -128..127
-            mFftImag[i] = 0.0f;
-        }
-
-        // 2. Apply Hann window
-        FFT.applyHannWindow(mFftReal);
-
-        // 3. Perform FFT (in-place)
-        FFT.fft(mFftReal, mFftImag);
-
-        // 4. Compute magnitudes (skip DC at bin 0)
-        int numBins = mCaptureSize / 2;
-        float[] magnitudes = new float[numBins - 1]; // skip DC
-        float maxMag = 0;
-        for (int i = 1; i < numBins; i++) {
-            float real = mFftReal[i];
-            float imag = mFftImag[i];
-            float mag = (float) Math.sqrt(real * real + imag * imag);
-            magnitudes[i - 1] = mag;
-            if (mag > maxMag) maxMag = mag;
-        }
-
-        // Normalize (avoid division by zero)
-        if (maxMag > 0) {
-            for (int i = 0; i < magnitudes.length; i++) {
-                magnitudes[i] = Math.min(1.0f, magnitudes[i] / maxMag);
-            }
-        }
-
-        // 5. Group into bars with logarithmic spacing
-        int barCount = config.barCount;
-        float[] barMagnitudes = new float[barCount];
-        for (int i = 0; i < magnitudes.length; i++) {
-            // Map index to logarithmic bar index
-            float logIndex = (float) (Math.log(i + 1) / Math.log(magnitudes.length + 1));
-            int barIndex = (int) (logIndex * barCount);
-            if (barIndex >= barCount) barIndex = barCount - 1;
-            if (magnitudes[i] > barMagnitudes[barIndex]) {
-                barMagnitudes[barIndex] = magnitudes[i];
-            }
-        }
-
-        // 6. Update the view (on UI thread)
-        runOnUiThread(() -> {
-            if (!mFirstDataReceived) {
-                mFirstDataReceived = true;
-                showToast("🌊 Waveform → FFT processing active!");
-            }
-            mVisualizerView.updateMagnitudes(barMagnitudes);
-        });
-    }
-
-    // ---------- Hardware FFT (if available) ----------
-    private void processHardwareFft(byte[] fft) {
-        // fft contains interleaved real/imag bytes (each 0..255)
-        int numBins = fft.length / 2;
-        float[] magnitudes = new float[numBins - 1]; // skip DC
-        float maxMag = 0;
-        for (int i = 1; i < numBins; i++) {
-            float real = fft[2 * i] & 0xFF;
-            float imag = fft[2 * i + 1] & 0xFF;
-            float mag = (float) Math.sqrt(real * real + imag * imag);
-            magnitudes[i - 1] = mag;
-            if (mag > maxMag) maxMag = mag;
-        }
-        if (maxMag > 0) {
-            for (int i = 0; i < magnitudes.length; i++) {
-                magnitudes[i] = Math.min(1.0f, magnitudes[i] / maxMag);
-            }
-        }
-
-        // Same logarithmic grouping as above
-        int barCount = config.barCount;
-        float[] barMagnitudes = new float[barCount];
-        for (int i = 0; i < magnitudes.length; i++) {
-            float logIndex = (float) (Math.log(i + 1) / Math.log(magnitudes.length + 1));
-            int barIndex = (int) (logIndex * barCount);
-            if (barIndex >= barCount) barIndex = barCount - 1;
-            if (magnitudes[i] > barMagnitudes[barIndex]) {
-                barMagnitudes[barIndex] = magnitudes[i];
-            }
-        }
-
-        runOnUiThread(() -> {
-            if (!mFirstDataReceived) {
-                mFirstDataReceived = true;
-                showToast("🎵 Hardware FFT data arrived!");
-            }
-            mVisualizerView.updateMagnitudes(barMagnitudes);
-        });
-    }
-
-    // ---------- Helper to show toasts only if enabled ----------
-    private void showToast(String msg) {
-        if (config != null && config.toasts) {
-            runOnUiThread(() -> Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show());
         }
     }
 
@@ -281,19 +161,18 @@ public class MainActivity extends AppCompatActivity {
 
         File configFile = new File(configDir, "config.yaml");
         if (!configFile.exists()) {
-            // Write default config with new fields
+            // Write default config file
             try (FileWriter writer = new FileWriter(configFile)) {
                 writer.write(
                         "# Visualizer Configuration\n" +
-                        "# Edit and restart to apply.\n" +
-                        "barCount: 32\n" +
-                        "heightScale: 0.4\n" +
-                        "smoothingFactor: 0.5\n" +
-                        "updateIntervalMs: 1024 # apparently this is in hz\n" +
-                        "colorArgb: 0xFF00FFFF\n" +
-                        "toasts: false\n" +
-                        "useBuiltinFile: true\n" +
-                        "filePath: \"/sdcard/Music/test.mp3\"\n"
+                                "# Edit these values and restart the app to apply changes.\n" +
+                                "barCount: 128\n" +
+                                "heightScale: 0.6\n" +
+                                "smoothingFactor: 0.6\n" +
+                                "updateIntervalMs: 50\n" +
+                                "colorArgb: 0xFF00FFFF\n" +
+                                "toasts: false\n" +
+                                "filePath: \"/sdcard/Music/test.mp3\""
                 );
             } catch (IOException e) {
                 e.printStackTrace();
@@ -311,28 +190,27 @@ public class MainActivity extends AppCompatActivity {
                 if (data.containsKey("smoothingFactor")) config.smoothingFactor = ((Number) data.get("smoothingFactor")).floatValue();
                 if (data.containsKey("updateIntervalMs")) config.updateIntervalMs = (int) data.get("updateIntervalMs");
                 if (data.containsKey("colorArgb")) config.colorArgb = (int) data.get("colorArgb");
-                if (data.containsKey("toasts")) config.toasts = (boolean) data.get("toasts");
-                if (data.containsKey("useBuiltinFile")) config.useBuiltinFile = (boolean) data.get("useBuiltinFile");
-                if (data.containsKey("filePath")) config.filePath = (String) data.get("filePath");
             }
         } catch (Exception e) {
             e.printStackTrace();
+            // fallback to defaults
         }
         return config;
     }
 
-    // ---------- Permission result ----------
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 1 && grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            config = loadConfig();
-            showToast("✅ Permission granted – starting visualizer");
+            
+            config = loadConfig(); // ensure config is available
+            if (config.toasts) Toast.makeText(this, "✅ Permission granted – starting visualizer", Toast.LENGTH_SHORT).show();
             setupVisualizer();
         } else {
-            config = loadConfig();
-            showToast("❌ Permission denied – can't access audio");
+            
+            config = loadConfig(); // safe even if file missing
+            if (config.toasts) Toast.makeText(this, "❌ Permission denied – can't access audio", Toast.LENGTH_LONG).show();
         }
     }
 
