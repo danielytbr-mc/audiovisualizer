@@ -171,7 +171,9 @@ public class MainActivity extends AppCompatActivity {
                                 "heightScale: 0.6\n" +
                                 "smoothingFactor: 0.6\n" +
                                 "updateIntervalMs: 50\n" +
-                                "colorArgb: 0xFF00FFFF\n"
+                                "colorArgb: 0xFF00FFFF\n" +
+                                "toasts: false\n" +
+                                "filePath: \"/sdcard/Music/test.mp3\""
                 );
             } catch (IOException e) {
                 e.printStackTrace();
