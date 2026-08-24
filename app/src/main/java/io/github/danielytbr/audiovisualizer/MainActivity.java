@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
             if (mPlayer == null) {
-                Toast.makeText(this, "Error: Music file missing", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Error: Music file missing: " + config.filePath, Toast.LENGTH_LONG).show();
                 return;
             }
             if (config.toasts) Toast.makeText(this, "✅ File loaded! Duration: " + mPlayer.getDuration() + "ms", Toast.LENGTH_SHORT).show();
@@ -166,11 +166,11 @@ public class MainActivity extends AppCompatActivity {
                 writer.write(
                         "# Visualizer Configuration\n" +
                                 "# Edit these values and restart the app to apply changes.\n" +
-                                "barCount: 128\n" +
-                                "heightScale: 0.6\n" +
-                                "smoothingFactor: 0.6\n" +
-                                "updateIntervalMs: 50\n" +
-                                "colorArgb: 0xFF00FFFF\n" +
+                                "barCount: 48\n" +
+                                "heightScale: 0.4\n" +
+                                "smoothingFactor: 0.7\n" +
+                                "updateIntervalMs: 1024\n" +
+                                "colorArgb: 0xFFFFFFFF\n" +
                                 "backgroundColor: 0xFF222222\n" +
                                 "useBuiltinFile: false\n" +
                                 "toasts: false\n" +
