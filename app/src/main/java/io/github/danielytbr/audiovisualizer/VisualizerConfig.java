@@ -7,4 +7,5 @@ public class VisualizerConfig {
     public int updateIntervalMs = 1024;
     public int colorArgb = 0xFF00FFFF; // cyan
     public boolean toasts = false;
+    public String filePath = "/sdcard/Music/test.mp3"
 }
