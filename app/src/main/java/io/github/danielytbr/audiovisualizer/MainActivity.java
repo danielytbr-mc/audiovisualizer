@@ -61,10 +61,12 @@ public class MainActivity extends AppCompatActivity {
         config = loadConfig();
 
         // 2. Apply config to the view
+        // Apply to the view
         mVisualizerView.setBarCount(config.barCount);
         mVisualizerView.setHeightScale(config.heightScale);
         mVisualizerView.setSmoothingFactor(config.smoothingFactor);
         mVisualizerView.setColor(config.colorArgb);
+        mVisualizerView.setBackgroundColor(config.backgroundColor);
 
         try {
             // 3. Load audio file
