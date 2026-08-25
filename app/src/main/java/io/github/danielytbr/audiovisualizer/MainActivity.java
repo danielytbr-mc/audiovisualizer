@@ -72,9 +72,7 @@ public class MainActivity extends AppCompatActivity {
             // 3. Load audio file
             //String filePath = Environment.getExternalStorageDirectory().getAbsolutePath()
             //    + "/Android/media/" + getPackageName() + "/song.mp3";
-         if (config.useBuiltinFile) {
-                   mPlayer = new MediaPlayer(R.raw.test);
-         } else {
+
         mPlayer = new MediaPlayer();
         try {
             mPlayer.setDataSource(config.filePath);
@@ -82,7 +80,6 @@ public class MainActivity extends AppCompatActivity {
             mPlayer.setOnPreparedListener(MediaPlayer::start);
         } catch (IOException e) {
             e.printStackTrace();
-        }
         }
             if (mPlayer == null) {
                 Toast.makeText(this, "Error: Music file missing: " + config.filePath, Toast.LENGTH_LONG).show();
