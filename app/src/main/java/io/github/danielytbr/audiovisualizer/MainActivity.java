@@ -203,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
                 if (data.containsKey("colorArgb")) config.colorArgb = (int) data.get("colorArgb");
                 if (data.containsKey("backgroundColor")) config.backgroundColor = (int) data.get("backgroundColor");
                 if (data.containsKey("useBuiltinFile")) config.useBuiltinFile = (boolean) data.get("useBuiltinFile");
-                if (data.containsKey("toasts")) config.toasts = (String) data.get("toasts");
+                if (data.containsKey("toasts")) config.toasts = (boolean) data.get("toasts");
                 if (data.containsKey("filePath")) config.filePath = (String) data.get("filePath");
             }
         } catch (Exception e) {
